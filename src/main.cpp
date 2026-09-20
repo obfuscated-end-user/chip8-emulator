@@ -2,9 +2,11 @@
 // https://austinmorlan.com/posts/chip8_emulator
 // unfinished, doesn't even compile
 // get SDL first
+// gcc main.cpp -o main.exe
 
 #include <chrono>
 #include <cstdint>
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <random>
@@ -32,6 +34,80 @@ uint8_t fontset[FONTSET_SIZE] = {
 	0xF0, 0x80, 0xF0, 0x80, 0x80  // F
 };
 
+class Chip8 {
+public:
+	uint8_t registers[16] {};
+	uint8_t memory[4096] {};
+	uint16_t index {};
+	uint16_t pc {};		// program counter
+	uint16_t stack[16] {};
+	uint8_t sp {};		// stack pointer
+	uint8_t delayTimer {};
+	uint8_t soundTimer {};
+	uint8_t keypad[16] {};
+	uint32_t video[64 * 32] {};
+	uint16_t opcode;
+	// void LoadROM(char const* filename);
+	std::default_random_engine randGen;
+	std::uniform_int_distribution<uint8_t> randByte;
+	
+	Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
+		// Initialize PC
+		pc = START_ADDRESS;
+
+		// Load fonts into memory
+		for (unsigned int i = 0; i < FONTSET_SIZE; ++i) {
+			memory[FONTSET_START_ADDRESS + i] = fontset[i];
+		}
+		
+		// Initialize RNG
+		randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
+	}
+	
+	void LoadROM(char const* filename) {
+		// Open the file as a stream of binary and move the file pointer to the end
+		std::ifstream file(filename, std::ios::binary | std::ios::ate);
+		
+		if (file.is_open()) {
+			// Get size of file and allocate a buffer to hold the contents
+			std::streampos size = file.tellg();
+			char* buffer = new char[size];
+			
+			// Go back to the beginning of the file and fill the buffer
+			file.seekg(0, std::ios::beg);
+			file.read(buffer, size);
+			file.close();
+			
+			// Load the ROM contents into the Chip8's memory, starting at 0x200
+			for (long i = 0; i < size; ++i) {
+				Chip8::memory[START_ADDRESS + i] = buffer[i];
+			}
+			
+			// Free the buffer
+			delete[] buffer;
+		}
+	}
+	
+	// subroutines
+	void OP_00EO() {
+		/**
+		 * CLS
+		 * Clear the display.
+		 */
+		memset(video, 0, sizeof(video));
+	}
+	
+	void OP_00EE() {
+		/**
+		 * RET
+		 * Return from a subroutine.
+		 */
+		--sp;
+		pc = stack[sp];
+	}
+};
+
+/**
 Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
 	// Initialize PC
 	pc = START_ADDRESS;
@@ -40,22 +116,11 @@ Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().cou
 	for (unsigned int i = 0; i < FONTSET_SIZE; ++i) {
 		memory[FONTSET_START_ADDRESS + i] = fontset[i];
 	}
+	
+	// Initialize RNG
+	randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
 }
 
-class Chip8 {
-public:
-	uint8_t registers[16] {};
-	uint8_t memory[3096] {};
-	uint16_t index {};
-	uint16_t pc {};		// program counter
-	uint8_t sp {};		// stack pointer
-	uint8_t delayTimer {};
-	uint8_t soundTimer {};
-	uint8_t keypad[16] {};
-	uint32_t video[64 * 32] {};
-	uint16_t opcode;
-	void LoadROM(char const* filename);
-};
 
 void Chip8::LoadROM(char const* filename) {
 	// Open the file as a stream of binary and move the file pointer to the end
@@ -80,6 +145,7 @@ void Chip8::LoadROM(char const* filename) {
 		delete[] buffer;
 	}
 }
+**/
 
 int main() {
 	std::cout << "Hello, World!" << std::endl;
