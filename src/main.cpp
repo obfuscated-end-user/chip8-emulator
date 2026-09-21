@@ -2,7 +2,7 @@
 // https://austinmorlan.com/posts/chip8_emulator
 // unfinished, doesn't even compile
 // get SDL first
-// gcc main.cpp -o main.exe
+// g++ main.cpp -o main.exe ;; .\main.exe
 
 #include <chrono>
 #include <cstdint>
@@ -148,7 +148,10 @@ void Chip8::LoadROM(char const* filename) {
 **/
 
 int main() {
-	std::cout << "Hello, World!" << std::endl;
+	std::cout << "Hello, world!" << std::endl;
+	// world's longest error message
+	Chip8 chip {};
+	// std::cout << chip << std::endl;
 
 	return 0;
 }
