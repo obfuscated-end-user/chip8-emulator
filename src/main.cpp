@@ -87,8 +87,8 @@ public:
 			delete[] buffer;
 		}
 	}
-	
-	// subroutines
+
+	// SUBROUTINES
 	void OP_00EO() {
 		/**
 		 * CLS
@@ -96,7 +96,7 @@ public:
 		 */
 		memset(video, 0, sizeof(video));
 	}
-	
+
 	void OP_00EE() {
 		/**
 		 * RET
@@ -104,6 +104,57 @@ public:
 		 */
 		--sp;
 		pc = stack[sp];
+	}
+
+	void OP_1nnn() {
+		/**
+		 * JP addr
+		 * Jump to location nnn.
+		 * The interpreter sets the program counter to nnn.
+		 */
+		uint16_t address = opcode & 0x0FFFu;
+		pc = address;
+	}
+
+	void OP_2nnn() {
+		/**
+		 * CALL addr
+		 * Call subroutine at nnn.
+		 */
+		uint16_t address = opcode & 0x0FFFu;
+		stack[sp] = pc;
+		++sp;
+		pc = address;
+	}
+
+	void OP_3xkk() {
+		/**
+		 * SE Vx, byte
+		 * Skip next instruction if Vx = kk.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t byte = opcode & 0x00FFu;
+		if (registers[Vx] == byte) pc += 2;
+	}
+
+	void OP_4xkk() {
+		/**
+		 * SNE Vx, byte
+		 * Skip next instruction if Vx != kk.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t byte = opcode & 0x00FFu;
+		if (registers[Vx] != byte) pc += 2;
+	}
+
+	void OP_5xy0() {
+		/**
+		 * SE Vx, Vy
+		 * Skip next instruction if Vx = Vy.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		if (registers[Vx] == registers[Vy]) pc += 2;
 	}
 };
 
@@ -149,6 +200,13 @@ void Chip8::LoadROM(char const* filename) {
 
 int main() {
 	std::cout << "Hello, world!" << std::endl;
+	std::cout << "Currently work in progress, check back later." << std::endl;
+
+	std::random_device rd;
+	std::mt19937 mt(rd());
+	std::uniform_real_distribution<double> dist(1.0, 10.0);
+	for (int i = 0; i < 10; ++i) std::cout << dist(mt) << "\n";
+
 	// world's longest error message
 	Chip8 chip {};
 	// std::cout << chip << std::endl;
