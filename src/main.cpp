@@ -50,7 +50,7 @@ public:
 	// void LoadROM(char const* filename);
 	std::default_random_engine randGen;
 	std::uniform_int_distribution<uint8_t> randByte;
-	
+
 	Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
 		// Initialize PC
 		pc = START_ADDRESS;
@@ -63,7 +63,7 @@ public:
 		// Initialize RNG
 		randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
 	}
-	
+
 	void LoadROM(char const* filename) {
 		// Open the file as a stream of binary and move the file pointer to the end
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
@@ -156,7 +156,7 @@ public:
 		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
 		if (registers[Vx] == registers[Vy]) pc += 2;
 	}
-	
+
 	void OP_6xkk() {
 		/**
 		 * LD Vx, byte
