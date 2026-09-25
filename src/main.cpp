@@ -162,9 +162,59 @@ public:
 		 * LD Vx, byte
 		 * Set Vx = kk.
 		 */
-		uint8_t Vx (opcode & 0x0F00u) >> 8u;
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		uint8_t byte = opcode & 0x00FFu;
 		registers[Vx] = byte;
+	}
+
+	void OP_7xkk() {
+		/**
+		 * ADD Vx, byte
+		 * Set Vx = Vx + kk.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t byte = opcode & 0x00FFu;
+		registers[Vx] += byte;
+	}
+
+	void OP_8xy0() {
+		/**
+		 * LD Vx, Vy
+		 * Set Vx = Vy.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		registers[Vx] = registers[Vy];
+	}
+
+	void OP_8xy1() {
+		/**
+		 * OR Vx, Vy
+		 * Set Vx OR Vy.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		registers[Vx] |= registers[Vy];
+	}
+
+	void OP_8xy2() {
+		/**
+		 * AND Vx, Vy
+		 * Set Vx AND Vy.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		registers[Vx] &= registers[Vy];
+	}
+
+	void OP_8xy3() {
+		/**
+		 * XOR Vx, Vy
+		 * Set Vx XOR Vy.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		registers[Vx] ^= registers[Vy];
 	}
 };
 
