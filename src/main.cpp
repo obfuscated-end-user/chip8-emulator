@@ -54,12 +54,9 @@ public:
 	Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
 		// Initialize PC
 		pc = START_ADDRESS;
-
 		// Load fonts into memory
-		for (unsigned int i = 0; i < FONTSET_SIZE; ++i) {
+		for (unsigned int i = 0; i < FONTSET_SIZE; ++i)
 			memory[FONTSET_START_ADDRESS + i] = fontset[i];
-		}
-		
 		// Initialize RNG
 		randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
 	}
@@ -67,22 +64,17 @@ public:
 	void LoadROM(char const* filename) {
 		// Open the file as a stream of binary and move the file pointer to the end
 		std::ifstream file(filename, std::ios::binary | std::ios::ate);
-		
 		if (file.is_open()) {
 			// Get size of file and allocate a buffer to hold the contents
 			std::streampos size = file.tellg();
 			char* buffer = new char[size];
-			
 			// Go back to the beginning of the file and fill the buffer
 			file.seekg(0, std::ios::beg);
 			file.read(buffer, size);
 			file.close();
-			
 			// Load the ROM contents into the Chip8's memory, starting at 0x200
-			for (long i = 0; i < size; ++i) {
+			for (long i = 0; i < size; ++i)
 				Chip8::memory[START_ADDRESS + i] = buffer[i];
-			}
-			
 			// Free the buffer
 			delete[] buffer;
 		}
@@ -216,47 +208,124 @@ public:
 		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
 		registers[Vx] ^= registers[Vy];
 	}
+
+	void OP_8xy4() {
+		/**
+		 * ADD Vx, Vy
+		 * Set Vx + Vy, set VF = carry.
+		 * The values of Vx and Vy are added together. If the result is greater
+		 * than 8 bits (i.e., > 255), VF is set to 1, otherwise 0. Only the
+		 * lowest 8 bits of the result are kept, and stored in Vx.
+		 * 
+		 * This is an ADD with an overflow flag. If the sum is greater than what
+		 * can fit into a byte (255), register VF will be set to 1 as a flag.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		uint16_t sum = registers[Vx] + registers[Vy];
+		if (sum > 255U) registers[0xF] = 1;
+		else registers[0xF] = 0;
+		registers[Vx] = sum & 0xFFu;
+	}
+
+	void OP_8xy5() {
+		/**
+		 * SUB Vx, Vy
+		 * Set Vx = Vx - Vy, set VF = NOT borrow.
+		 * If Vx > Vy, then VF is set to 1, otherwise 0. Then Vy is subtracted
+		 * from Vx, and the results stored in Vx.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		if (registers[Vx] > registers[Vy]) registers[0xF] = 1;
+		else registers[0xF] = 0;
+		registers[Vx] -= registers[Vy];
+	}
+
+	void OP_8xy6() {
+		/**
+		 * 8xy6 - SHR Vx
+		 * Set Vx = Vx SHR 1.
+		 * If the least-significant bit of Vx is 1, then VF is set to 1,
+		 * otherwise 0. Then Vx is divided by 2.
+		 * A right shift is performed (division by 2), and the least significant
+		 * bit is saved in Register VF.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		// Save LSB (least significant bit) in VF
+		registers[0xF] = (registers[Vx] & 0x1u);
+		registers[Vx] >>= 1;
+	}
+
+	void OP_8xy7() {
+		/**
+		 * 8xy7 - SUBN Vx, Vy
+		 * Set Vx = Vy - Vx, set VF = NOT borrow.
+		 * If Vy > Vx, then VF is set to 1, otherwise 0. Then Vx is subtracted
+		 * from Vy, and the results stored in Vx.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		if (registers[Vy] > registers[Vx]) registers[0xF] = 1;
+		else registers[0xF] = 0;
+		registers[Vx] = registers[Vy] - registers[Vx];
+	}
+
+	void OP_8xy7E() {
+		/**
+		 * 8xyE - SHL Vx {, Vy}
+		 * Set Vx = Vx SHL 1.
+		 * If the most-significant bit of Vx is 1, then VF is set to 1,
+		 * otherwise to 0. Then Vx is multiplied by 2.
+		 * A left shift is performed (multiplication by 2), and the most
+		 * significant bit is saved in Register VF.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		// Save MSB (most significant bit) in VF
+		registers[0xF] = (registers[Vx] & 0x80u) >> 7u;
+		registers[Vx] <<= 1;
+	}
+
+	void OP_9xy0() {
+		/**
+		 * 9xy0 - SNE Vx, Vy
+		 * Skip next instruction if Vx != Vy.
+		 * Since our PC has already been incremented by 2 in `Cycle()`, we can
+		 * just increment by 2 again to skip the next instruction.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		if (registers[Vx] != registers[Vy]) pc += 2;
+	}
+
+	void OP_Annn() {
+		/**
+		 * Annn - LD I, addr
+		 * Set I = nnn.
+		 */
+		uint16_t address = opcode & 0x0FFFu;
+		index = address;
+	}
+
+	void OP_Bnnn() {
+		/**
+		 * Bnnn - JP V0, addr
+		 * Jump to location nnn + V0.
+		 */
+		uint16_t address = opcode & 0x0FFFu;
+		pc = registers[0] + address;
+	}
+
+	void OP_Cxkk() {
+		/**
+		 * Cxkk - RND Vx, byte
+		 * Set Vx = random byte AND kk.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t byte = opcode & 0x00FFu;
+		registers[Vx] = randByte(randGen) & byte;
+	}
 };
-
-/**
-Chip8::Chip8() : randGen(std::chrono::system_clock::now().time_since_epoch().count()) {
-	// Initialize PC
-	pc = START_ADDRESS;
-
-	// Load fonts into memory
-	for (unsigned int i = 0; i < FONTSET_SIZE; ++i) {
-		memory[FONTSET_START_ADDRESS + i] = fontset[i];
-	}
-	
-	// Initialize RNG
-	randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
-}
-
-
-void Chip8::LoadROM(char const* filename) {
-	// Open the file as a stream of binary and move the file pointer to the end
-	std::ifstream file(filename, std::ios::binary | std::ios::ate);
-	
-	if (file.is_open()) {
-		// Get size of file and allocate a buffer to hold the contents
-		std::streampos size = file.tellg();
-		char* buffer = new char[size];
-		
-		// Go back to the beginning of the file and fill the buffer
-		file.seekg(0, std::ios::beg);
-		file.read(buffer, size);
-		file.close();
-		
-		// Load the ROM contents into the Chip8's memory, starting at 0x200
-		for (long i = 0; i < size; ++i) {
-			Chip8::memory[START_ADDRESS + i] = buffer[i];
-		}
-		
-		// Free the buffer
-		delete[] buffer;
-	}
-}
-**/
 
 int main() {
 	std::cout << "Hello, world!" << std::endl;
@@ -269,6 +338,7 @@ int main() {
 
 	// world's longest error message
 	Chip8 chip {};
+	chip.OP_9xy0();
 	// std::cout << chip << std::endl;
 
 	return 0;
