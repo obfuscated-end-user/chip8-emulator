@@ -15,6 +15,10 @@ const unsigned int FONTSET_SIZE = 80;
 const unsigned int FONTSET_START_ADDRESS = 0x50;
 const unsigned int START_ADDRESS = 0x200;
 
+// move to header files later
+const unsigned int VIDEO_HEIGHT = 32;
+const unsigned int VIDEO_WIDTH = 64;
+
 uint8_t fontset[FONTSET_SIZE] = {
 	0xF0, 0x90, 0x90, 0x90, 0xF0, // 0
 	0x20, 0x60, 0x20, 0x20, 0x70, // 1
@@ -45,7 +49,7 @@ public:
 	uint8_t delayTimer {};
 	uint8_t soundTimer {};
 	uint8_t keypad[16] {};
-	uint32_t video[64 * 32] {};
+	uint32_t video[VIDEO_WIDTH * VIDEO_HEIGHT] {};
 	uint16_t opcode;
 	// void LoadROM(char const* filename);
 	std::default_random_engine randGen;
@@ -324,6 +328,42 @@ public:
 		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		uint8_t byte = opcode & 0x00FFu;
 		registers[Vx] = randByte(randGen) & byte;
+	}
+
+	void OP_Dxyn() {
+		/**
+		 * Dxyn - DRW Vx, Vy, nibble
+		 * Display n-byte sprite starting at memory location I at (Vx, Vy), set
+		 * VF = collision.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t Vy = (opcode & 0x00F0u) >> 4u;
+		uint8_t height = opcode & 0x000Fu;
+
+		// Wrap if going beyond screen boundaries
+		uint8_t xPos = registers[Vx] % VIDEO_WIDTH;
+		uint8_t yPos = registers[Vy] % VIDEO_HEIGHT;
+
+		registers[0xF] = 0;
+
+		for (unsigned int row = 0; row < height; ++row) {
+			uint8_t spriteByte = memory[index + row];
+
+			for (unsigned int col = 0; col < 8; ++col) {
+				uint8_t spritePixel = spriteByte & (0x80u >> col);
+				uint32_t* screenPixel = &video[(yPos + row) * VIDEO_WIDTH + (xPos + col)];
+
+				// Sprite pixel is on
+				if (spritePixel) {
+					// Screen pixel also on - collision
+					if (*screenPixel == 0xFFFFFFFF)
+						registers[0xF] = 1;
+
+					// Effectively XOR with the sprite pixel
+					*screenPixel ^= 0xFFFFFFFF;
+				}
+			}
+		}
 	}
 };
 
