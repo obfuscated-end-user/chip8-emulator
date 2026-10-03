@@ -358,6 +358,16 @@ public:
 			}
 		}
 	}
+	
+	void OP_Ex9E() {
+		/**
+		 * Ex9E - SKP Vx
+		 * Skip next instruction if key with the value of Vx is pressed.
+		*/
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t key = registers[Vx];
+		if (keypad[key]) pc += 2;
+	}
 };
 
 int main() {
