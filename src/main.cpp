@@ -421,6 +421,24 @@ public:
 		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		delayTimer = registers[Vx];
 	}
+	
+	void OP_Fx18() {
+		/**
+		 * Fx18 - LD ST, Vx
+		 * Set sound timer = Vx.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		soundTimer = registers[Vx];
+	}
+	
+	void OP_Fx1E() {
+		/**
+		 * Fx1E - ADD I, Vx
+		 * Set I = I + Vx.
+		 */
+		 uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		 index += registers[Vx];
+	}
 };
 
 int main() {
