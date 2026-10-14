@@ -439,6 +439,16 @@ public:
 		 uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		 index += registers[Vx];
 	}
+	
+	void OP_Fx29() {
+		/**
+		 * Fx29 - LD F, Vx
+		 * Set I = location of sprite for digit Vx.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t digit = registers[Vx];
+		index = FONTSET_START_ADDRESS + (5 * digit);
+	}
 };
 
 int main() {
