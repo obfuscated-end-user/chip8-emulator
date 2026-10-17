@@ -436,8 +436,8 @@ public:
 		 * Fx1E - ADD I, Vx
 		 * Set I = I + Vx.
 		 */
-		 uint8_t Vx = (opcode & 0x0F00u) >> 8u;
-		 index += registers[Vx];
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		index += registers[Vx];
 	}
 	
 	void OP_Fx29() {
@@ -448,6 +448,44 @@ public:
 		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		uint8_t digit = registers[Vx];
 		index = FONTSET_START_ADDRESS + (5 * digit);
+	}
+
+	void OP_Fx33() {
+		/**
+		 * Fx33 - LD B, Vx
+		 * Store BCD representation of Vx in memory locations I, I+1, and I+2.
+		 * The interpreter takes the decimal value of Vx, and places the
+		 * hundreds digit in memory at location in I, the tens digit at location
+		 * I+1, and the ones digit at location I+2.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		uint8_t value = registers[Vx];
+		// Ones place
+		memory[index + 2] = value % 10;
+		value /= 10;
+		// Tens place
+		memory[index + 1] = value % 10;
+		value /= 10;
+		// Hundreds place
+		memory[index] = value % 10;
+	}
+
+	void OP_Fx55() {
+		/**
+		 * Fx55 - LD [I], Vx
+		 * Store registers V0 through Vx in memory starting at location I.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		for (uint8_t i = 0; i <= Vx; ++i) memory[index + i] = registers[i];
+	}
+
+	void OP_Fx65() {
+		/**
+		 * Fx65 - LD Vx, [I]
+		 * Read registers V0 through Vx from memory starting at location I.
+		 */
+		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
+		for (uint8_t i = 0; i <= Vx; ++i) registers[i] = memory[index + i];
 	}
 };
 
