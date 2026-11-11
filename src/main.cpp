@@ -63,7 +63,7 @@ public:
 			memory[FONTSET_START_ADDRESS + i] = fontset[i];
 		// Initialize RNG
 		randByte = std::uniform_int_distribution<uint8_t>(0, 255U);
-		
+
 		// Set up function pointer table
 		table[0x0] = &Chip8::Table0;
 		table[0x1] = &Chip8::OP_1nnn;
@@ -81,7 +81,7 @@ public:
 		table[0xD] = &Chip8::OP_Dxyn;
 		table[0xE] = &Chip8::TableE;
 		table[0xF] = &Chip8::TableF;
-		
+
 		for (size_t i = 0; i <= 0xE; i++) {
 			table0[i] = &Chip8::OP_NULL;
 			table8[i] = &Chip8::OP_NULL;
@@ -101,8 +101,7 @@ public:
 		table8[0x7] = &Chip8::OP_8xy7;
 		table8[0xE] = &Chip8::OP_8xyE;
 
-		for (size_t i = 0; i <= 0x65; i++)
-			tableF[i] = &Chip8::OP_NULL;
+		for (size_t i = 0; i <= 0x65; i++) tableF[i] = &Chip8::OP_NULL;
 
 		tableF[0x07] = &Chip8::OP_Fx07;
 		tableF[0x0A] = &Chip8::OP_Fx0A;
@@ -118,7 +117,7 @@ public:
 	void Table0() {
 		((*this).*(Chip8::table0[opcode & 0x000Fu]))();
 	}
-	
+
 	void Table8() {
 		((*this).*(table8[opcode & 0x000Fu]))();
 	}
@@ -126,13 +125,13 @@ public:
 	void TableE() {
 		((*this).*(tableE[opcode & 0x000Fu]))();
 	}
-	
+
 	void TableF() {
 		((*this).*(tableF[opcode & 0x000Fu]))();
 	}
-	
+
 	void OP_NULL() {}
-	
+
 	typedef void (Chip8::*Chip8Func)();
 	Chip8Func table[0xF + 1];
 	Chip8Func table0[0xE + 1];
