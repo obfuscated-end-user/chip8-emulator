@@ -561,6 +561,23 @@ public:
 		uint8_t Vx = (opcode & 0x0F00u) >> 8u;
 		for (uint8_t i = 0; i <= Vx; ++i) registers[i] = memory[index + i];
 	}
+	
+	void Cycle() {
+		// Fetch
+		opcode = (memory[pc] << 8u) | memory[pc + 1];
+		
+		// Increment the PC before we execute anything
+		pc += 2;
+		
+		// Decode and execute
+		((*this).*(table[(opcode & 0xF000u) >> 12u]))();
+		
+		// Decrement the delay tinmer if it's been set
+		if (delayTimer > 0) --delayTimer;
+		
+		// Decrement the sound timer if it's been set
+		if (soundTimer > 0) --soundTimer;
+	}
 };
 
 int main() {
