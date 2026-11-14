@@ -576,6 +576,33 @@ public:
 	}
 };
 
+// obviously this doesn't work on your end (me)
+// https://wiki.libsdl.org/SDL3/APIByCategory
+class Platform {
+public:
+	Platform(char const* title, int windowWidth, int windowHeight, int textureWidth, int textureHeight) {
+		SDL_Init(SDL_INIT_VIDEO);
+		window = SDL_CreateWindow(title, 0, 0, windowWidth, windowHeight, SDL_WINDOW_SHOWN);
+		renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+		texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STREAMING, textureWidth, textureHeight);
+	}
+	
+	~Platform() {
+		SDL_DestroyTexture(texture);
+		SDL_DestroyRenderer(texture);
+		SDL_DestroyWindow(texture);
+		SDL_Quit();
+	}
+	
+	void Update(void const* buffer, int pitch) {
+		SDL_UpdateTexture(texture, nullptr, buffer, pitch);
+		SDL_RenderClear(renderer);
+		SDL_RenderCopy(renderer, texture, nullptr, nullptr);
+		SDL_RenderPresent(renderer);
+	}
+	// TBD
+};
+
 int main() {
 	std::cout << "Hello, world!" << std::endl;
 	std::cout << "Currently work in progress, check back later." << std::endl;
